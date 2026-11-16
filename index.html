@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Open email draft</title>
+<style>
+  :root { --bg: #ffffff; --fg: #1f1f1f; --muted: #5f6368; --box: #f1f3f4; --primary: #1a73e8; --secondary: #5f6368; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1f1f1f; --fg: #e8eaed; --muted: #9aa0a6; --box: #2d2e30; --primary: #8ab4f8; --secondary: #9aa0a6; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  a.btn { display: block; padding: 14px; margin: 12px 0; border-radius: 10px; text-align: center; font-size: 17px; font-weight: 600; text-decoration: none; color: var(--bg); background: var(--primary); }
+  a.btn.alt { background: var(--secondary); }
+  dl { background: var(--box); border-radius: 10px; padding: 12px 14px; margin: 16px 0 0; word-break: break-word; }
+  dt { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  dt:first-child { margin-top: 0; }
+  dd { margin: 0; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Opening Gmail…</h1>
+  <p id="hint">If nothing happens, tap the button below.</p>
+  <a class="btn" id="gmail" href="#">Open in Gmail</a>
+  <a class="btn alt" id="other" href="#">Other email app</a>
+  <dl>
+    <dt>To</dt><dd id="to"></dd>
+    <dt>Subject</dt><dd id="su"></dd>
+    <dt>Message</dt><dd id="body"></dd>
+  </dl>
+</main>
+<script>
+  // Details come after "#", so they never leave this device (not sent to the web server).
+  var p = new URLSearchParams(location.hash.slice(1));
+  var to = (p.get('to') || '').trim();
+  var su = p.get('su') || '';
+  var body = p.get('body') || '';
+
+  document.getElementById('to').textContent = to;
+  document.getElementById('su').textContent = su;
+  document.getElementById('body').textContent = body;
+
+  if (!/^[^@\s<>"'?&#]+@[^@\s<>"'?&#]+\.[a-z]{2,}$/i.test(to)) {
+    document.getElementById('title').textContent = 'This link is incomplete';
+    document.getElementById('hint').textContent = 'No valid email address was found in the link.';
+    document.getElementById('gmail').style.display = 'none';
+    document.getElementById('other').style.display = 'none';
+  } else {
+    var e = encodeURIComponent;
+    var q = 'subject=' + e(su) + '&body=' + e(body);
+    var mailto = 'mailto:' + to + '?' + q;
+    var ua = navigator.userAgent;
+    var gmail;
+    if (/android/i.test(ua)) {
+      // Android: open the Gmail app itself with the draft
+      gmail = 'intent:' + to + '?' + q + '#Intent;scheme=mailto;package=com.google.android.gm;end';
+    } else if (/iphone|ipad|ipod/i.test(ua)) {
+      // iPhone/iPad: Gmail app's own link
+      gmail = 'googlegmail://co?to=' + e(to) + '&' + q;
+    } else {
+      // Computer: Gmail in the browser
+      gmail = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + e(to) + '&su=' + e(su) + '&body=' + e(body);
+    }
+    document.getElementById('gmail').href = gmail;
+    document.getElementById('other').href = mailto;
+    location.href = gmail;   // try to jump straight there
+  }
+</script>
+</body>
+</html>
